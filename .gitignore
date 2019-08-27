@@ -1,0 +1,7 @@
+/Venv/
+/Data/
+/Embeddings/
+*.csv
+*.pyc
+*.DS_Store
+.env
