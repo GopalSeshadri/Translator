@@ -45,4 +45,23 @@ class Models:
                     epochs = epochs,
                     validation_split = 0.1)
 
-        return seq2seq_model
+        return seq2seq_model, encoder_input, encoder_states, decoder_embedding_layer, decoder_lstm_layer, decoder_dense_layer
+
+    def samplingModel(encoder_input, encoder_states, decoder_embedding_layer, decoder_lstm_layer, decoder_dense_layer, unit_dim):
+
+        encoder_model = Model(encoder_input, encoder_states)
+
+        decoder_model_input = Input(shape = (1,))
+        decoder_model_input_h = Input(shape = (unit_dim,))
+        decoder_model_input_c = Input(shape = (unit_dim,))
+        decoder_model_input_states = [decoder_model_input_h, decoder_model_input_c]
+
+        decoder_model_x = decoder_embedding_layer(decoder_model_input)
+        decoder_model_x, decoder_model_output_h, decoder_model_output_c = decoder_lstm_layer(decoder_model_x, initial_state = decoder_model_states)
+        decoder_model_output = decoder_dense_layer(decoder_model_x)
+        decoder_model_output_states = [decoder_model_output_h, decoder_model_output_c]
+
+        decoder_model = Model([decoder_model_input] + decoder_model_input_states,
+                            [decoder_model_output] + decoder_model_output_states)
+
+        return encoder_model, decoder_model

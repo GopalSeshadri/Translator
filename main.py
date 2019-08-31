@@ -14,7 +14,7 @@ EMBEDDING_DIM = 100
 BATCH_SIZE = 64
 UNIT_DIM = 128
 MAX_SEQ_LENGTH = 20
-EPOCHS = 20
+EPOCHS = 5
 
 input_list, translated_list = Preprocess.readData('jpn', NUM_SAMPLES)
 translated_input_list = ['<sos> ' + each for each in translated_list]
@@ -25,6 +25,9 @@ input_tokenizer, input_seq, input_word2idx = Preprocess.fitInputTokenizer(input_
 translated_tokenizer, _, translated_word2idx = Preprocess.fitTranslatedTokenizer(translated_full_list, MAX_WORDS)
 translated_input_seq = translated_tokenizer.texts_to_sequences(translated_input_list)
 translated_output_seq = translated_tokenizer.texts_to_sequences(translated_output_list)
+
+input_idx2word = {input_word2idx[key] : key for key in input_word2idx.keys()}
+translated_idx2word = {translated_word2idx[key] : key for key in translated_word2idx.keys()}
 
 max_len_input = max([len(seq) for seq in input_seq])
 max_len_translated = max([len(seq) for seq in translated_output_seq])
@@ -46,4 +49,6 @@ translated_output_onehot = Preprocess.oneHotOutput(translated_output_seq, max_le
 
 print(max_len_input, max_len_translated)
 
-seq2seq_model = Models.usingSeq2Seq(embedding_matrix_input, max_len_input, max_len_translated, num_words_input, num_words_translated, EMBEDDING_DIM, UNIT_DIM, input_seq, translated_input_seq, translated_output_onehot, BATCH_SIZE, EPOCHS)
+seq2seq_model, encoder_input, encoder_states, decoder_embedding_layer, decoder_lstm_layer, decoder_dense_layer = Models.usingSeq2Seq(embedding_matrix_input, max_len_input, max_len_translated, num_words_input, num_words_translated, EMBEDDING_DIM, UNIT_DIM, input_seq, translated_input_seq, translated_output_onehot, BATCH_SIZE, EPOCHS)
+
+encoder_model, decoder_model = Models.samplingModel(encoder_input, encoder_states, decoder_embedding_layer, decoder_lstm_layer, decoder_dense_layer, UNIT_DIM)
