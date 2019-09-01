@@ -15,7 +15,7 @@ EMBEDDING_DIM = 100
 BATCH_SIZE = 64
 UNIT_DIM = 128
 MAX_SEQ_LENGTH = 20
-EPOCHS = 20
+EPOCHS = 200
 
 input_list, translated_list = Preprocess.readData('jpn', NUM_SAMPLES)
 translated_input_list = ['<sos> ' + each for each in translated_list]
@@ -35,6 +35,8 @@ max_len_translated = max([len(seq) for seq in translated_output_seq])
 
 max_len_input = min(max_len_input, MAX_SEQ_LENGTH)
 max_len_translated = min(max_len_translated, MAX_SEQ_LENGTH)
+
+max_len_dict = {'max_len_input' : max_len_input, 'max_len_translated' : max_len_translated}
 
 input_seq = Preprocess.padInputSequences(input_seq, max_len_input)
 translated_input_seq = Preprocess.padTranslatedSequences(translated_input_seq, max_len_translated)
@@ -61,6 +63,7 @@ Utilities.saveModel(seq2seq_model, 'seq2seq_model')
 Utilities.saveModel(encoder_model, 'encoder_model')
 Utilities.saveModel(decoder_model, 'decoder_model')
 
+Utilities.saveDict(max_len_dict, 'max_len_dict')
 Utilities.saveDict(input_tokenizer, 'input_tokenizer')
 Utilities.saveDict(translated_word2idx, 'translated_word2idx')
 Utilities.saveDict(translated_idx2word, 'translated_idx2word')
