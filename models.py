@@ -57,7 +57,7 @@ class Models:
         decoder_model_input_states = [decoder_model_input_h, decoder_model_input_c]
 
         decoder_model_x = decoder_embedding_layer(decoder_model_input)
-        decoder_model_x, decoder_model_output_h, decoder_model_output_c = decoder_lstm_layer(decoder_model_x, initial_state = decoder_model_states)
+        decoder_model_x, decoder_model_output_h, decoder_model_output_c = decoder_lstm_layer(decoder_model_x, initial_state = decoder_model_input_states)
         decoder_model_output = decoder_dense_layer(decoder_model_x)
         decoder_model_output_states = [decoder_model_output_h, decoder_model_output_c]
 
@@ -65,3 +65,28 @@ class Models:
                             [decoder_model_output] + decoder_model_output_states)
 
         return encoder_model, decoder_model
+
+    def sampleFromSamplingModel(input_seq, encoder_model, decoder_model, translated_word2idx, translated_idx2word, max_len_translated):
+
+        output_seq = []
+
+        input_states = encoder_model.predict(input_seq)
+        decoder_input = np.zeros((1, 1))
+        decoder_input[0, 0] = translated_word2idx['<sos>']
+        eos_idx = translated_word2idx['<eos>']
+
+        for i in range(max_len_translated):
+            output, h, c = decoder_model.predict([decoder_input] + input_states)
+
+            idx = np.argmax(output[0, 0, :])
+
+            if idx == eos_idx:
+                break
+
+            if idx > 0:
+                output_seq.append(translated_idx2word[idx])
+
+            decoder_input[0, 0] = idx
+            input_states = [h, c]
+
+        return ''.join(output_seq)

@@ -6,6 +6,7 @@ import sys
 import re
 from preprocess import Preprocess
 from models import Models
+from utilities import Utilities
 import pickle
 
 NUM_SAMPLES = 20000
@@ -14,7 +15,7 @@ EMBEDDING_DIM = 100
 BATCH_SIZE = 64
 UNIT_DIM = 128
 MAX_SEQ_LENGTH = 20
-EPOCHS = 5
+EPOCHS = 20
 
 input_list, translated_list = Preprocess.readData('jpn', NUM_SAMPLES)
 translated_input_list = ['<sos> ' + each for each in translated_list]
@@ -47,8 +48,19 @@ embedding_matrix_input, num_words_input = Preprocess.getEmbeddingMatrix(MAX_WORD
 
 translated_output_onehot = Preprocess.oneHotOutput(translated_output_seq, max_len_translated, num_words_translated)
 
-print(max_len_input, max_len_translated)
-
 seq2seq_model, encoder_input, encoder_states, decoder_embedding_layer, decoder_lstm_layer, decoder_dense_layer = Models.usingSeq2Seq(embedding_matrix_input, max_len_input, max_len_translated, num_words_input, num_words_translated, EMBEDDING_DIM, UNIT_DIM, input_seq, translated_input_seq, translated_output_onehot, BATCH_SIZE, EPOCHS)
 
 encoder_model, decoder_model = Models.samplingModel(encoder_input, encoder_states, decoder_embedding_layer, decoder_lstm_layer, decoder_dense_layer, UNIT_DIM)
+
+# translated_output = Models.sampleFromSamplingModel(input_seq[5:6], encoder_model, decoder_model, translated_word2idx, translated_idx2word, max_len_translated)
+#
+# print(translated_output)
+
+## Saving the models
+Utilities.saveModel(seq2seq_model, 'seq2seq_model')
+Utilities.saveModel(encoder_model, 'encoder_model')
+Utilities.saveModel(decoder_model, 'decoder_model')
+
+Utilities.saveDict(input_tokenizer, 'input_tokenizer')
+Utilities.saveDict(translated_word2idx, 'translated_word2idx')
+Utilities.saveDict(translated_idx2word, 'translated_idx2word')
