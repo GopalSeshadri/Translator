@@ -4,7 +4,7 @@ import keras
 from keras.models import Model
 from keras.layers import Embedding, Input, Dense
 from keras.layers import LSTM, GRU
-from keras.optimizers import Adam
+from keras.optimizers import Adam, RMSprop
 
 class Models:
     def usingSeq2Seq(embedding_matrix, max_len_input, max_len_translated, num_words_input, num_words_translated, embedding_dim, unit_dim, input_seq, translated_input_seq, translated_output_onehot, batch_size, epochs):
@@ -36,7 +36,7 @@ class Models:
         seq2seq_model = Model([encoder_input, decoder_input], decoder_output)
 
         seq2seq_model.compile(loss = 'categorical_crossentropy',
-                        optimizer = Adam(lr = 1e-3, decay = 1e-6),
+                        optimizer = 'rmsprop',
                         metrics = ['accuracy'])
 
         seq2seq_model.fit([input_seq, translated_input_seq],
