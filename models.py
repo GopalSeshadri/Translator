@@ -2,9 +2,11 @@ import numpy as np
 import pandas as pd
 import keras
 from keras.models import Model
-from keras.layers import Embedding, Input, Dense
-from keras.layers import LSTM, GRU
+from keras.layers import Embedding, Input, Dense, Activation
+from keras.layers import LSTM, GRU, Bidirectional
+from keras.layers import RepeatVector, Concatenate, Dot, Lambda
 from keras.optimizers import Adam, RMSprop
+from keras.backend as K
 
 class Models:
     def usingSeq2Seq(embedding_matrix, max_len_input, max_len_translated, num_words_input, num_words_translated, embedding_dim, unit_dim, input_seq, translated_input_seq, translated_output_onehot, batch_size, epochs):
@@ -90,3 +92,38 @@ class Models:
             input_states = [h, c]
 
         return ''.join(output_seq)
+
+    def softmaxOverT(x):
+        e = K.exp(x - K.max(x, axis = 1, keepdims = True))
+        s = K.sum(e, axis = 1, keepdims = True)
+        softmax = e/s
+        return softmax
+
+    def usingAttention(embedding_matrix, max_len_input, max_len_translated, num_words_input, num_words_translated, embedding_dim, unit_dim):
+        at_encoder_embedding_layer = Embedding(embedding_matrix.shape[0],
+                                    embedding_matrix.shape[1],
+                                    weights = [embedding_matrix],
+                                    trainable = False)
+
+        at_encoder_input = Input(shape = (max_len_input,))
+        x1 = at_encoder_embedding_layer(encoder_input)
+
+        at_encoder_lstm_layer = Bidirectional(LSTM(unit_dim, return_sequences = True, dropout = 0.6))
+        at_encoder_output = at_encoder_lstm_layer(x1)
+
+
+        # These decoder inputs are the teacher forcing inputs
+        at_decoder_input = Input(shape = (max_len_translated,))
+        at_decoder_embedding_layer = Embedding(num_words_translated, embedding_dim)
+        x2 = at_decoder_embedding_layer(at_decoder_input)
+
+        # Defining global layers
+        at_repeat_layer = RepeatVector(max_len_input) #To repeat previous decoder states Tx times
+        at_concat_layer = Concatenate(axis = -1) # To concatenate repeated s-1 (Tx, UD2) and h (Tx, 2xUD1) along time axis
+        at_dense1_layer = Dense(24, activation = 'tanh')
+        at_dense2_layer = Dense(1, activation = Models.softmaxOverT)
+        at_dot_layer = Dot(axis = 1)
+
+        return at_encoder_embedding_layer, at_encoder_lstm_layer, at_decoder_embedding_layer, at_repeat_layer, at_concat_layer, at_dense1_layer, at_dense2_layer, at_dot_layer
+
+    def 
