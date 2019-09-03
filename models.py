@@ -190,10 +190,10 @@ class Models:
         decoder_input_single_x = at_decoder_embedding_layer(decoder_input_single)
 
         # Getting context for the given h and s
-        context = Models.oneStepOfAttention(encoder_output_as_decoder_input, decoder_initial_s, at_repeat_layer, at_concat_layer, at_dense1_layer, at_dense2_layer, at_dot_layer, unit_dim)
+        context = Models.oneStepOfAttention(encoder_output_as_decoder_input, decoder_initial_s, at_repeat_layer, at_concat_layer, at_dense1_layer, at_dense2_layer, at_dot_layer)
         x = context_prev_word_concat_layer([context, decoder_input_single_x])
         x, s, c = at_decoder_lstm_layer(x, initial_state = [decoder_initial_s, decoder_initial_c])
-        output = at_decoder_lstm_layer(x)
+        output = at_decoder_dense_layer(x)
 
         decoder_model = Model(inputs = [decoder_input_single, encoder_output_as_decoder_input, decoder_initial_c, decoder_initial_s], outputs = [output, s, c])
 
