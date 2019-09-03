@@ -15,7 +15,7 @@ EMBEDDING_DIM = 100
 BATCH_SIZE = 64
 UNIT_DIM = 128
 MAX_SEQ_LENGTH = 20
-EPOCHS = 200
+EPOCHS = 2
 
 input_list, translated_list = Preprocess.readData('jpn', NUM_SAMPLES)
 translated_input_list = ['<sos> ' + each for each in translated_list]
@@ -65,5 +65,12 @@ translated_output_onehot = Preprocess.oneHotOutput(translated_output_seq, max_le
 # Utilities.saveDict(translated_idx2word, 'translated_idx2word')
 
 ## Fitting the attention model
-at_encoder_embedding_layer, at_encoder_lstm_layer, at_decoder_embedding_layer, at_repeat_layer, at_concat_layer, at_dense1_layer, at_dense2_layer, at_dot_layer = \
-usingAttention(embedding_matrix, max_len_input, max_len_translated, num_words_input, num_words_translated, EMBEDDING_DIM, UNIT_DIM)
+at_encoder_embedding_layer, at_encoder_lstm_layer, at_decoder_embedding_layer, at_encoder_input, at_decoder_input, at_encoder_output, at_decoder_input_x = Models.usingAttention(embedding_matrix_input, max_len_input, max_len_translated, num_words_input, num_words_translated, EMBEDDING_DIM, UNIT_DIM)
+at_repeat_layer, at_concat_layer, at_dense1_layer, at_dense2_layer, at_dot_layer = Models.defGlobalLayers(max_len_input)
+attention_model, at_decoder_lstm_layer, at_decoder_dense_layer, context_prev_s_concat_layer, decoder_initial_s, decoder_initial_c = Models.buildAttentionModel(num_words_translated, max_len_translated, at_encoder_input, at_decoder_input, at_encoder_output, at_decoder_input_x, UNIT_DIM, NUM_SAMPLES, input_seq, translated_input_seq, translated_output_onehot, BATCH_SIZE, EPOCHS, at_repeat_layer, at_concat_layer, at_dense1_layer, at_dense2_layer, at_dot_layer)
+at_encoder_model, at_decoder_model = Models.attentionSamplingModel(at_encoder_input, at_encoder_output, max_len_input, decoder_initial_s, decoder_initial_c, at_decoder_embedding_layer, at_decoder_lstm_layer, at_decoder_dense_layer, context_prev_word_concat_layer, at_repeat_layer, at_concat_layer, at_dense1_layer, at_dense2_layer, at_dot_layer, UNIT_DIM)
+
+## Saving the Seq2Seq models
+Utilities.saveModel(attention_model, 'attention_model')
+Utilities.saveModel(at_encoder_model, 'at_encoder_model')
+Utilities.saveModel(at_decoder_model, 'at_decoder_model')
