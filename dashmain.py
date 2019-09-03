@@ -81,7 +81,7 @@ app.layout = html.Div([
             [Input('submit-button', 'n_clicks')],
             [State('input-text', 'value')])
 def affectTranslate(n_clicks, text):
-
+        UNIT_DIM = 256
         translated_output = ''
         if text != None and text != '':
             seq2seq_model = Utilities.loadModel('seq2seq_model')
@@ -93,18 +93,35 @@ def affectTranslate(n_clicks, text):
             translated_word2idx = Utilities.loadDict('translated_word2idx')
             translated_idx2word = Utilities.loadDict('translated_idx2word')
 
-            print(text, file=sys.stderr)
             text_list = []
             text_list.append(text)
-            print(text_list, file=sys.stderr)
 
             text_seq = input_tokenizer.texts_to_sequences(text_list)
             text_seq = Preprocess.padInputSequences(text_seq, max_len_dict['max_len_input'])
-            print(text_seq, file=sys.stderr)
+
             translated_output = Models.sampleFromSamplingModel(text_seq, encoder_model, decoder_model, translated_word2idx, translated_idx2word, max_len_dict['max_len_translated'])
-            print(translated_output, file=sys.stderr)
 
             K.clear_session()
+
+        # if text != None and text != '':
+        #     attention_model = Utilities.loadModel('attention_model')
+        #     at_encoder_model = Utilities.loadModel('at_encoder_model')
+        #     at_decoder_model = Utilities.loadModel('at_decoder_model')
+        #
+        #     max_len_dict = Utilities.loadDict('max_len_dict')
+        #     input_tokenizer = Utilities.loadDict('input_tokenizer')
+        #     translated_word2idx = Utilities.loadDict('translated_word2idx')
+        #     translated_idx2word = Utilities.loadDict('translated_idx2word')
+        #
+        #     text_list = []
+        #     text_list.append(text)
+        #
+        #     text_seq = input_tokenizer.texts_to_sequences(text_list)
+        #     text_seq = Preprocess.padInputSequences(text_seq, max_len_dict['max_len_input'])
+        #
+        #     translated_output = Models.sampleFromAttentionSamplingModel(text_seq, at_encoder_model, at_decoder_model, translated_word2idx, translated_idx2word, max_len_dict['max_len_translated'], UNIT_DIM)
+        #
+        #     K.clear_session()
 
         return translated_output
 

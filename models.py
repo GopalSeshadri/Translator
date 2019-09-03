@@ -2,8 +2,8 @@ import numpy as np
 import pandas as pd
 import keras
 from keras.models import Model
-from keras.layers import Embedding, Input, Dense, Activation
-from keras.layers import LSTM, GRU, Bidirectional
+from keras.layers import Input, Dense, Activation, Softmax
+from keras.layers import Embedding, LSTM, GRU, Bidirectional
 from keras.layers import RepeatVector, Concatenate, Dot, Lambda
 from keras.optimizers import Adam, RMSprop
 import keras.backend as K
@@ -114,7 +114,7 @@ class Models:
         at_encoder_input = Input(shape = (max_len_input,))
         x1 = at_encoder_embedding_layer(at_encoder_input)
 
-        at_encoder_lstm_layer = Bidirectional(LSTM(unit_dim, return_sequences = True, dropout = 0.4))
+        at_encoder_lstm_layer = Bidirectional(LSTM(unit_dim, return_sequences = True, dropout = 0.5))
         at_encoder_output = at_encoder_lstm_layer(x1)
 
 
@@ -130,12 +130,13 @@ class Models:
         at_repeat_layer = RepeatVector(max_len_input) #To repeat previous decoder states Tx times
         at_concat_layer = Concatenate(axis = -1) # To concatenate repeated s-1 (Tx, UD2) and h (Tx, 2xUD1) along time axis
         at_dense1_layer = Dense(24, activation = 'tanh')
-        at_dense2_layer = Dense(1, activation = Models.softmaxOverT)
+        at_dense2_layer = Dense(1)
+        at_softmax_layer = Softmax(axis = 1)
         at_dot_layer = Dot(axes = 1)
 
-        return at_repeat_layer, at_concat_layer, at_dense1_layer, at_dense2_layer, at_dot_layer
+        return at_repeat_layer, at_concat_layer, at_dense1_layer, at_dense2_layer, at_softmax_layer, at_dot_layer
 
-    def oneStepOfAttention(h, prev_s, at_repeat_layer, at_concat_layer, at_dense1_layer, at_dense2_layer, at_dot_layer):
+    def oneStepOfAttention(h, prev_s, at_repeat_layer, at_concat_layer, at_dense1_layer, at_dense2_layer, at_softmax_layer, at_dot_layer):
         # global at_repeat_layer
         # global at_concat_layer
         # global at_dense1_layer
@@ -144,11 +145,12 @@ class Models:
         prev_s = at_repeat_layer(prev_s)
         x = at_concat_layer([h, prev_s])
         x = at_dense1_layer(x)
-        alphas = at_dense2_layer(x)
+        x = at_dense2_layer(x)
+        alphas = at_softmax_layer(x)
         context = at_dot_layer([alphas, h])
         return context
 
-    def buildAttentionModel(num_words_translated, max_len_translated, at_encoder_input, at_decoder_input, at_encoder_output, at_decoder_input_x, unit_dim, num_samples, input_seq, translated_input_seq, translated_output_onehot, batch_size, epochs, at_repeat_layer, at_concat_layer, at_dense1_layer, at_dense2_layer, at_dot_layer):
+    def buildAttentionModel(num_words_translated, max_len_translated, at_encoder_input, at_decoder_input, at_encoder_output, at_decoder_input_x, unit_dim, num_samples, input_seq, translated_input_seq, translated_output_onehot, batch_size, epochs, at_repeat_layer, at_concat_layer, at_dense1_layer, at_dense2_layer, at_softmax_layer, at_dot_layer):
         at_decoder_lstm_layer = LSTM(unit_dim, return_state = True)
         at_decoder_dense_layer = Dense(num_words_translated, activation = 'softmax')
         decoder_initial_s = Input(shape = (unit_dim,))
@@ -159,7 +161,7 @@ class Models:
         c = decoder_initial_c
         output_list = []
         for ty in range(max_len_translated):
-            context = Models.oneStepOfAttention(at_encoder_output, s, at_repeat_layer, at_concat_layer, at_dense1_layer, at_dense2_layer, at_dot_layer)
+            context = Models.oneStepOfAttention(at_encoder_output, s, at_repeat_layer, at_concat_layer, at_dense1_layer, at_dense2_layer, at_softmax_layer, at_dot_layer)
             lambda_layer = Lambda(lambda x: x[:, ty:ty+1])
             x_ty = lambda_layer(at_decoder_input_x)
             x = context_prev_word_concat_layer([context, x_ty])
@@ -181,7 +183,7 @@ class Models:
                     validation_split = 0.1)
         return attention_model, at_decoder_lstm_layer, at_decoder_dense_layer, context_prev_word_concat_layer, decoder_initial_s, decoder_initial_c
 
-    def attentionSamplingModel(at_encoder_input, at_encoder_output, max_len_input, decoder_initial_s, decoder_initial_c, at_decoder_embedding_layer, at_decoder_lstm_layer, at_decoder_dense_layer, context_prev_word_concat_layer, at_repeat_layer, at_concat_layer, at_dense1_layer, at_dense2_layer, at_dot_layer, unit_dim):
+    def attentionSamplingModel(at_encoder_input, at_encoder_output, max_len_input, decoder_initial_s, decoder_initial_c, at_decoder_embedding_layer, at_decoder_lstm_layer, at_decoder_dense_layer, context_prev_word_concat_layer, at_repeat_layer, at_concat_layer, at_dense1_layer, at_dense2_layer, at_softmax_layer, at_dot_layer, unit_dim):
         encoder_model = Model(at_encoder_input, at_encoder_output)
 
         # Defining T=1 decoder sampling model
@@ -190,7 +192,7 @@ class Models:
         decoder_input_single_x = at_decoder_embedding_layer(decoder_input_single)
 
         # Getting context for the given h and s
-        context = Models.oneStepOfAttention(encoder_output_as_decoder_input, decoder_initial_s, at_repeat_layer, at_concat_layer, at_dense1_layer, at_dense2_layer, at_dot_layer)
+        context = Models.oneStepOfAttention(encoder_output_as_decoder_input, decoder_initial_s, at_repeat_layer, at_concat_layer, at_dense1_layer, at_dense2_layer, at_softmax_layer, at_dot_layer)
         x = context_prev_word_concat_layer([context, decoder_input_single_x])
         x, s, c = at_decoder_lstm_layer(x, initial_state = [decoder_initial_s, decoder_initial_c])
         output = at_decoder_dense_layer(x)
@@ -214,7 +216,7 @@ class Models:
         for i in range(max_len_translated):
             output, s, c = at_decoder_model.predict([decoder_input, encoder_output, s, c])
 
-            idx = np.argmax(output[0, 0, :])
+            idx = np.argmax(output.flatten())
 
             if idx == eos_idx:
                 break
