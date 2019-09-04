@@ -17,6 +17,17 @@ nltk.download('wordnet')
 
 class Preprocess:
     def readData(language_name, num_samples):
+        '''
+        This function takes in a language name and num of samples. Returns lists of input and translated (target) language sentences.
+
+        Parameters:
+        language_name (str) : Three letters name of a language, that uniquely identifies the corresponding file. For example, jpn for japanese
+        num_samples (int) : The number of input sentences to consider.
+
+        Returns:
+        input_list (list) : A list of input (English) language sentences
+        translated_list (list) : A list of translated (Japanese) language sentences.
+        '''
         input_list, translated_list = [], []
         c = 0
         for line in open('Data/{}.txt'.format(language_name), encoding = 'utf8'):
@@ -32,22 +43,66 @@ class Preprocess:
         return input_list, translated_list
 
     def fitInputTokenizer(data, max_words):
+        '''
+        This function takes in the input language data and max words. Returns a tokenizer, sequences and word index of the tokenizer.
+
+        Parameters:
+        data (list) : A list of input language sentences.
+        max_words (int) : Maximum number of words to consider.
+
+        Returns:
+        tokenizer (Object) : A tokenizer object trained on input language sentences.
+        sequences (list) : A list of tokenized input language sequences.
+        word_index (dict) : A dictionary of words of the input language as key and their index as values.
+        '''
         tokenizer = Tokenizer(num_words = max_words)
         tokenizer.fit_on_texts(data)
         sequences = tokenizer.texts_to_sequences(data)
         return tokenizer, sequences, tokenizer.word_index
 
     def fitTranslatedTokenizer(data, max_words):
+        '''
+        This function takes in the translated language data and max words. Returns a tokenizer, sequences and word index of the tokenizer.
+
+        Parameters:
+        data (list) : A list of translated language sentences.
+        max_words (int) : Maximum number of words to consider.
+
+        Returns:
+        tokenizer (Object) : A tokenizer object trained on translated language sentences.
+        sequences (list) : A list of tokenized translated language sequences.
+        word_index (dict) : A dictionary of words of the translated language as key and their index as values.
+        '''
         tokenizer = Tokenizer(num_words = max_words, filters = '')
         tokenizer.fit_on_texts(data)
         sequences = tokenizer.texts_to_sequences(data)
         return tokenizer, sequences, tokenizer.word_index
 
     def padInputSequences(sequence, max_seq_len):
+        '''
+        This function takes in a list of sequences and maximum sequences length as input. Returns a list of padded sequences as output.
+
+        Parameters:
+        sequence (list) : A list of sequences.
+        max_seq_len (int) : Maximum sequence length
+
+        Returns:
+        padded_sequence (list) : A list of pre-padded sequences.
+        '''
         padded_sequence = pad_sequences(sequence, maxlen = max_seq_len, padding ='pre')
         return padded_sequence
 
     def padTranslatedSequences(sequence, max_seq_len):
+        '''
+        This function takes in a list of sequences and maximum sequences length as input. Returns a list of padded sequences as output.
+
+        Parameters:
+        sequence (list) : A list of sequences.
+        max_seq_len (int) : The maximum sequence length
+
+        Returns:
+        padded_sequence (list) : A list of post-padded sequences.
+        '''
         padded_sequence = pad_sequences(sequence, maxlen = max_seq_len, padding ='post')
         return padded_sequence
 

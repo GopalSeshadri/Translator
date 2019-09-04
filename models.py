@@ -8,12 +8,6 @@ from keras.layers import RepeatVector, Concatenate, Dot, Lambda
 from keras.optimizers import Adam, RMSprop
 import keras.backend as K
 
-# at_repeat_layer = RepeatVector(max_len_input) #To repeat previous decoder states Tx times
-# at_concat_layer = Concatenate(axis = -1) # To concatenate repeated s-1 (Tx, UD2) and h (Tx, 2xUD1) along time axis
-# at_dense1_layer = Dense(24, activation = 'tanh')
-# at_dense2_layer = Dense(1, activation = Models.softmaxOverT)
-# at_dot_layer = Dot(axes = 1)
-
 class Models:
     def usingSeq2Seq(embedding_matrix, max_len_input, max_len_translated, num_words_input, num_words_translated, embedding_dim, unit_dim, input_seq, translated_input_seq, translated_output_onehot, batch_size, epochs):
 
@@ -137,11 +131,6 @@ class Models:
         return at_repeat_layer, at_concat_layer, at_dense1_layer, at_dense2_layer, at_softmax_layer, at_dot_layer
 
     def oneStepOfAttention(h, prev_s, at_repeat_layer, at_concat_layer, at_dense1_layer, at_dense2_layer, at_softmax_layer, at_dot_layer):
-        # global at_repeat_layer
-        # global at_concat_layer
-        # global at_dense1_layer
-        # global at_dense2_layer
-        # global at_dot_layer
         prev_s = at_repeat_layer(prev_s)
         x = at_concat_layer([h, prev_s])
         x = at_dense1_layer(x)

@@ -1,5 +1,4 @@
 /Venv/
-/Data/
 /Embeddings/
 *.csv
 *.pyc
