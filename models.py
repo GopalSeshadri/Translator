@@ -10,7 +10,7 @@ import keras.backend as K
 
 class Models:
     def usingSeq2Seq(embedding_matrix, max_len_input, max_len_translated, num_words_input, num_words_translated, embedding_dim, unit_dim, input_seq, translated_input_seq, translated_output_onehot, batch_size, epochs):
-
+        
         encoder_embedding_layer = Embedding(embedding_matrix.shape[0],
                                     embedding_matrix.shape[1],
                                     weights = [embedding_matrix],
